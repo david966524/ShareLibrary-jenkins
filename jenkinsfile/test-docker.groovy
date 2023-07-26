@@ -80,6 +80,13 @@ pipeline {
         }
     
         stage("build"){
+            // agent docker 也可以定义在stage 中
+            // agent {
+            //     docker {
+            //         image 'maven:3.6.3-jdk-8'
+            //         args '-v $HOME/.m2:/root/.m2'
+            //     }
+            // }
             steps{
                 script{
                
