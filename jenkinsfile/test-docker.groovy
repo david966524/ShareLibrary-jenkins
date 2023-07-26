@@ -23,7 +23,7 @@ String gitAuthorName
 pipeline {
     agent {
         docker {
-            iamge 'maven:3.6.3-jdk-8'
+            image 'maven:3.6.3-jdk-8'
             args '-v $HOME/.m2:/root/.m2'
         }
     }
