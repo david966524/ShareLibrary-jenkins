@@ -1,6 +1,5 @@
-
-// git仓库地址
-def gitRepo = "https://github.com/david966524/ShareLibrary-jenkins.git"
+//git仓库地址
+def gitRepo = "http://192.168.1.222/david/gin-vue-admin.git"
 
 // 环境列表
 def sites = [
@@ -16,7 +15,7 @@ def siteLabels = sites.values().join(',')
 def siteOptions = sites.keySet().join(',')
 def siteCount = sites.size()
 //credentialsId
-def credentialsId = "842ea056-6087-470a-9ca0-06bd1e9fa13c"
+def credentialsId = "33c2b02a-af2a-4040-b362-a358c7dfd78b"
 
 String gitAuthorName 
 
@@ -29,11 +28,15 @@ pipeline {
         disableConcurrentBuilds() //禁止并行
         timeout(time: 1, unit: "HOURS") //流水线超时1小时
     }
+    tools {
+        go 'mygo'
+        //mvn 'mymvn'
+    }
     parameters {
         //install extended-choice-parameter
          extendedChoice(
             name: '环境',
-            defaultValue: 'test',
+            //defaultValue: '',
             descriptionPropertyValue: siteLabels,
             multiSelectDelimiter: ',',
             type: 'PT_RADIO',
@@ -41,28 +44,43 @@ pipeline {
             visibleItemCount: siteCount,
         )
         //install git-parameter
-        gitParameter name: 'BRANCH',type: 'PT_BRANCH_TAG',defaultValue: 'release/test', branchFilter: 'origin/(.*)', useRepository: gitRepo,quickFilterEnabled: true
+        gitParameter name: 'BRANCH',
+                     type: 'PT_BRANCH_TAG',
+                    // defaultValue: '', 
+                     branchFilter: 'origin/(.*)', 
+                     useRepository: gitRepo, 
+                     quickFilterEnabled: true
     }
     
     stages {
         // stage("test"){
         //     steps{
-        //         //git branch: '$BRANCH', credentialsId: '842ea056-6087-470a-9ca0-06bd1e9fa13c', url: 'https://github.com/david966524/ShareLibrary-jenkins.git'
-        //         git branch: '$BRANCH', url: gitRepo
-        //         script{
-        //             println("test")
-        //             print(siteOptions)
-        //             println("${params.环境}")
-        //             utils.PrintMsg()
-        //             hello.Helloutils()
-        //         }
+        //         git branch: BRANCH, credentialsId: '33c2b02a-af2a-4040-b362-a358c7dfd78b', url: 'http://192.168.1.222/david/gin-vue-admin.git'
+        //         // git branch: '$BRANCH', url: gitRepo
+        //         // script{
+        //         //     println("test")
+        //         //     print(siteOptions)
+        //         //     println("${params.环境}")
+        //         //     utils.PrintMsg()
+        //         //     hello.Helloutils()
+        //         // }
         //     }
         // }
-
+        stage("check"){
+            when{ expression { params.环境 != null && params.环境 == "test" } }
+            steps{
+                 script{
+                    println("----${params.环境}----")
+                    println("test")
+                 }
+            }
+        }
         stage("pull"){
             steps{
-                //checkout scmGit(branches: [[name: BRANCH ]], extensions: [], userRemoteConfigs: [[credentialsId: '842ea056-6087-470a-9ca0-06bd1e9fa13c', url: gitRepo]])
+                //checkout scmGit(branches: [[name: BRANCH ]], extensions: [], userRemoteConfigs: [[credentialsId: credentialsId, url: gitRepo]])
+                
                 script{
+                    utils.PrintMsg()
                     utils.pull(BRANCH,credentialsId,gitRepo)   //封装jenkins DSL 方法
                     println("部署环境：${params.环境}")
                     gitAuthorName = utils.GetAuthorName()
@@ -74,29 +92,31 @@ pipeline {
             }
         }
     
-        stage("build"){
-            steps{
-                script{
-                    mvn = tool "mymvn"
-                    println(mvn)
-                    sh "${mvn}/bin/mvn --version"
-                }
-            }
-        }
+        // stage("build"){
+        //     steps{
+        //         script{
+        //             mvn = tool "mymvn"
+        //             println(mvn)
+        //             sh "${mvn}/bin/mvn --version"
+        //         }
+        //     }
+        // }
         
         stage("build go"){
             input {
-                message "确定要构建吗？"
+                message " 选择分支  ${BRANCH} \n 确定要构建吗？ "
                 ok "yes"
                 submitter "admin,david"
             }
             steps {
                 script{
-                    mygo = tool "mygo"
-                    sh "${mygo}/bin/go version"
+                    //mygo = tool "mygo"
+                    //sh "${mygo}/bin/go version"
+                    sh "go version"
                 }
             }
         }
+       
     }
     
        
@@ -110,7 +130,7 @@ pipeline {
         success {
             script {
                 currentBuild.description = "\n 构建成功"
-                currentBuild.displayName = gitAuthorName
+                //currentBuild.displayName = gitAuthorName
             }
         }
         
@@ -127,3 +147,4 @@ pipeline {
         }
     }
 }
+
